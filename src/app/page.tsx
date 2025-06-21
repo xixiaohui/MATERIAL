@@ -1,17 +1,16 @@
-import ChartVisualization from "../components/ChartVisualization";
+
+
+
 
 export default function Home() {
-
-  return(
+  return (
     <main className="p-6">
-            {/* <h1 className="text-2xl font-bold">上传 CSV 文件</h1>
-            <UploadCSV />
-    
-            <h1 className="text-2xl font-bold">展示数据</h1>
-            <ViewFirestoreFields /> */}
-    
-            <h1 className="text-2xl font-bold">搜索字词报告</h1>
-            <ChartVisualization />
-          </main>
+      
+      
+    <h1 className="text-8xl font-mono">Team Ride</h1>
+
+
+      
+    </main>
   );
 }
