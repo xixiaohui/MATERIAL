@@ -304,7 +304,7 @@ export default function GPXViewerPage() {
 
       <div className="flex gap-4 mb-4">
         <Input type="file" accept=".gpx" onChange={onFileInputChange} />
-        <Button onClick={exportPolylinePNG} disabled={points.length === 0}>Export PNG</Button>
+        <Button onClick={exportPolylinePNG} disabled={points.length === 0}>导出 PNG图片</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
