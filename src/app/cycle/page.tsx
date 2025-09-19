@@ -167,20 +167,7 @@ export default function GPXViewerPage() {
     onFile(f)
   }
 
-  const exportPNG = async () => {
-    if (!mapRef.current) return
-    try {
-      const canvas = await html2canvas(mapRef.current, { useCORS: true, allowTaint: true })
-      const url = canvas.toDataURL('image/png')
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'gpx-export.png'
-      a.click()
-    } catch (e) {
-      console.error(e)
-      alert('Export failed. Check CORS or use a plain canvas.')
-    }
-  }
+
 
   //非透明图片
   const exportPolylinePNG = () => {
