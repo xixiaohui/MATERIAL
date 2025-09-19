@@ -17,7 +17,7 @@ export default function Home() {
             选中gpx文件，显示轨迹图
           </li>
           <li className="tracking-[-.01em]">
-            下载透明png图，包含运动数据和轨迹
+            下载透明png图，包含运动数据和轨迹 2025
           </li>
         </ol>
 
