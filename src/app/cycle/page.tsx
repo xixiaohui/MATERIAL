@@ -42,6 +42,8 @@ import html2canvas from 'html2canvas'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
+
+
 // Fix leaflet default icon issue
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -293,15 +295,12 @@ export default function GPXViewerPage() {
     a.click()
   }
   
-  
-  
-  
 
   const polyline: [number, number][] = points.map(p => [p.lat, p.lon])
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">GPX Viewer (shadcn + react-leaflet)</h1>
+      <h1 className="text-2xl font-bold mb-4">GPX Viewer Cycle</h1>
 
       <div className="flex gap-4 mb-4">
         <Input type="file" accept=".gpx" onChange={onFileInputChange} />
