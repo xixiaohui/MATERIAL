@@ -38,20 +38,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 
-import html2canvas from 'html2canvas'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-
-
+// import html2canvas from 'html2canvas'
+// import L from 'leaflet'
+// import 'leaflet/dist/leaflet.css'
 
 // Fix leaflet default icon issue
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+// delete (L.Icon.Default.prototype as any)._getIconUrl;
+// L.Icon.Default.mergeOptions({
+//   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+//   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+//   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+// });
 
 // Dynamic import of react-leaflet components
 const MapContainer = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false })
@@ -60,7 +58,10 @@ const Polyline = dynamic(() => import('react-leaflet').then(m => m.Polyline), { 
 const Marker = dynamic(() => import('react-leaflet').then(m => m.Marker), { ssr: false })
 const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false })
 
+
 import { useMap } from 'react-leaflet'
+
+
 
 // Type definitions
 type Point = { lat: number; lon: number; ele?: number; time?: string }
@@ -145,6 +146,25 @@ export default function GPXViewerPage() {
   const [loading, setLoading] = useState(false)
   const [stats, setStats] = useState<Stats>(null)
   const mapRef = useRef<HTMLDivElement | null>(null)
+
+  // ✅ 在客户端加载时初始化 Leaflet 图标
+  useEffect(() => {
+    (async () => {
+      if (typeof window !== "undefined") {
+        const L = (await import("leaflet")).default
+        await import("leaflet/dist/leaflet.css")
+
+        // 修复默认 marker 图标
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (L.Icon.Default.prototype as any)._getIconUrl
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        })
+      }
+    })()
+  }, [])
 
   const onFile = useCallback(async (file: File | null) => {
     if (!file) return
@@ -257,7 +277,7 @@ export default function GPXViewerPage() {
     const boxY = textY
   
     ctx.strokeStyle = 'orange'
-    ctx.lineWidth = 7
+    ctx.lineWidth = 3
     ctx.beginPath()
     points.forEach((p, idx) => {
       const x =
