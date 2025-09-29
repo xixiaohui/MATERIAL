@@ -77,7 +77,10 @@ function calcAverageSpeed(
  * @param {"local" | "utc" | "custom"} type - 输出格式
  * @returns {string} 格式化后的时间字符串
  */
-function formatSportTime(timeNode: Element, type: "local" | "utc" | "custom" = "local"): string {
+function formatSportTime(
+  timeNode: Element,
+  type: "local" | "utc" | "custom" = "local"
+): string {
   if (!timeNode || !timeNode.textContent) return "";
 
   const isoString = timeNode.textContent;
@@ -89,7 +92,7 @@ function formatSportTime(timeNode: Element, type: "local" | "utc" | "custom" = "
     case "local":
       return date.toLocaleString(); // 本地时间字符串
     case "utc":
-      return date.toISOString();    // UTC 时间字符串
+      return date.toISOString(); // UTC 时间字符串
     case "custom":
       // YYYY-MM-DD HH:mm:ss（本地时间）
       const yyyy = date.getFullYear();
@@ -108,12 +111,16 @@ export default function GpxExcalidrawPage() {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
 
+  const [fileName, setFileName] = useState("还未选择文件");
+
   // 解析 GPX 文件
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    setFileName(file ? file.name : "还未选择文件");
 
     const text = await file.text();
     const parser = new DOMParser();
@@ -158,24 +165,20 @@ export default function GpxExcalidrawPage() {
     }
 
     let averageSpeed_text = "";
-    if(totalTime && totalDistance){
+    if (totalTime && totalDistance) {
       const totalSeconds = parseInt(totalTime.textContent, 10);
       const meters = parseInt(totalDistance.textContent || "0");
-      averageSpeed_text = calcAverageSpeed(meters,totalSeconds);
+      averageSpeed_text = calcAverageSpeed(meters, totalSeconds);
     }
     //时间
-    const sportTime = Array.from(
-      xmlDoc.getElementsByTagName("time")
-    )[0];
-    let sportTime_text= ""
+    const sportTime = Array.from(xmlDoc.getElementsByTagName("time"))[0];
+    let sportTime_text = "";
     if (sportTime) {
-      console.log(formatSportTime(sportTime, "local"));  // 本地时间
-      console.log(formatSportTime(sportTime, "utc"));    // UTC ISO 字符串
+      console.log(formatSportTime(sportTime, "local")); // 本地时间
+      console.log(formatSportTime(sportTime, "utc")); // UTC ISO 字符串
       console.log(formatSportTime(sportTime, "custom")); // 2025-09-28 10:59:45
-      sportTime_text = formatSportTime(sportTime, "custom")
+      sportTime_text = formatSportTime(sportTime, "custom");
     }
-
-
 
     // 提取轨迹点
     const points = trkpts.map((pt) => ({
@@ -228,11 +231,11 @@ export default function GpxExcalidrawPage() {
       angle: 0,
       updated: Date.now(),
       index: "a1", // 新版必需
-      points: transformedPoints.map((p, i) => [
+      points: transformedPoints.map((p) => [
         p.x - transformedPoints[0].x,
         p.y - transformedPoints[0].y,
       ]),
-      pressures: Array(transformedPoints.length).fill(0.2), // 跟 points 对齐
+      pressures: Array(transformedPoints.length).fill(0.3), // 跟 points 对齐
       simulatePressure: false,
       lastCommittedPoint: null,
     };
@@ -259,7 +262,7 @@ export default function GpxExcalidrawPage() {
           type: "text",
           x: 150,
           y: 350,
-          text: "累计爬升:"+cumulativeClimb_text,
+          text: "累计爬升:" + cumulativeClimb_text,
           fontSize: 20,
           strokeColor: "#1971c2",
         },
@@ -267,7 +270,7 @@ export default function GpxExcalidrawPage() {
           type: "text",
           x: 150,
           y: 400,
-          text: "平均速度:"+averageSpeed_text,
+          text: "平均速度:" + averageSpeed_text,
           fontSize: 20,
           strokeColor: "#1971c2",
         },
@@ -302,13 +305,26 @@ export default function GpxExcalidrawPage() {
           scrollToContent: true,
         }}
         renderTopRightUI={() => (
-          <div>
+          <div className="flex items-center space-x-3">
+            {/* 自定义按钮 */}
+            <label
+              htmlFor="file-upload"
+              className="cursor-pointer bg-pink-500 hover:bg-pink-600 text-cyan-50 px-4 py-2 rounded-lg transition-colors"
+            >
+              📂 选择 GPX 文件
+            </label>
+
+            {/* 隐藏的 input */}
             <input
+              id="file-upload"
               type="file"
               accept=".gpx"
               onChange={handleFileUpload}
-              style={{ marginRight: 7 }}
+              className="hidden"
             />
+
+            {/* 文件名显示 */}
+            <span className="text-gray-700">{fileName}</span>
           </div>
         )}
         excalidrawAPI={(api) => setExcalidrawAPI(api)}
