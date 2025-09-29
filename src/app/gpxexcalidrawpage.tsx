@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Excalidraw,
   CaptureUpdateAction,
@@ -8,21 +8,15 @@ import {
 
 import type {
   ExcalidrawImperativeAPI,
-  ExcalidrawFreeDrawElement,
-  SceneData,
+  ExcalidrawFreeDrawElement
 } from "@excalidraw/excalidraw/types";
+
 
 const { WelcomeScreen } = await import("@excalidraw/excalidraw");
 
 export default function GpxExcalidrawPage() {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
-
-  // 用于存储轨迹点
-  const [scenePoints, setScenePoints] = useState<{ x: number; y: number }[]>(
-    []
-  );
-  const [scale, setScale] = useState(1);
 
   // 解析 GPX 文件
   const handleFileUpload = async (
@@ -67,9 +61,7 @@ export default function GpxExcalidrawPage() {
       y: -(p.lat - minLat) * scale, // Y轴反向
     }));
 
-    setScenePoints(transformedPoints);
-    setScale(scale);
-
+ 
     const freedraw: ExcalidrawFreeDrawElement = {
       id: "free-1",
       type: "freedraw",
