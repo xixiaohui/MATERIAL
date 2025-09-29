@@ -11,11 +11,98 @@ import {
 
 import type {
   ExcalidrawImperativeAPI,
-  ExcalidrawFreeDrawElement
+  ExcalidrawFreeDrawElement,
 } from "@excalidraw/excalidraw/types";
 
-
 const { WelcomeScreen } = await import("@excalidraw/excalidraw");
+
+/**
+ * 格式化总时长
+ * @param {number} totalSeconds - 总时长（单位：秒）
+ * @param {"hhmm" | "chinese"} type - 输出格式
+ * @returns {string} 格式化后的时间字符串
+ */
+function formatTotalTime(totalSeconds, type = "hhmm") {
+  if (isNaN(totalSeconds) || totalSeconds < 0) return "00:00";
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  if (type === "chinese") {
+    return `${hours}小时${minutes}分钟`;
+  }
+
+  // 默认 HH:mm 格式
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+function formatDistance(meters: number): string {
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(2)} 公里`;
+  }
+  return `${Math.round(meters)} 米`;
+}
+
+/**
+ * 计算平均速度
+ * @param {number} totalDistance - 总距离（米）
+ * @param {number} totalTime - 总时间（秒）
+ * @param {"m/s" | "km/h"} unit - 输出单位
+ * @returns {string} 平均速度字符串
+ */
+function calcAverageSpeed(
+  totalDistance: number,
+  totalTime: number,
+  unit: "m/s" | "km/h" = "km/h"
+): string {
+  if (totalTime <= 0) return "0";
+
+  let speed: number;
+
+  if (unit === "m/s") {
+    speed = totalDistance / totalTime;
+    return `${speed.toFixed(2)} m/s`;
+  } else {
+    // km/h = (米 / 秒) * 3.6
+    speed = (totalDistance / totalTime) * 3.6;
+    return `${speed.toFixed(2)} km/h`;
+  }
+}
+
+/**
+ * 解析 <time> 节点并格式化
+ * @param {Element} timeNode - XML 中的 <time> 节点
+ * @param {"local" | "utc" | "custom"} type - 输出格式
+ * @returns {string} 格式化后的时间字符串
+ */
+function formatSportTime(timeNode: Element, type: "local" | "utc" | "custom" = "local"): string {
+  if (!timeNode || !timeNode.textContent) return "";
+
+  const isoString = timeNode.textContent;
+  const date = new Date(isoString);
+
+  if (isNaN(date.getTime())) return "";
+
+  switch (type) {
+    case "local":
+      return date.toLocaleString(); // 本地时间字符串
+    case "utc":
+      return date.toISOString();    // UTC 时间字符串
+    case "custom":
+      // YYYY-MM-DD HH:mm:ss（本地时间）
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      const hh = String(date.getHours()).padStart(2, "0");
+      const min = String(date.getMinutes()).padStart(2, "0");
+      const ss = String(date.getSeconds()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+    default:
+      return date.toLocaleString();
+  }
+}
 
 export default function GpxExcalidrawPage() {
   const [excalidrawAPI, setExcalidrawAPI] =
@@ -37,6 +124,58 @@ export default function GpxExcalidrawPage() {
       alert("没有找到轨迹点");
       return;
     }
+
+    //时长
+    const totalTime = Array.from(xmlDoc.getElementsByTagName("totalTime"))[0];
+    //距离
+    const totalDistance = Array.from(
+      xmlDoc.getElementsByTagName("totalDistance")
+    )[0];
+    //累计爬升
+    const cumulativeClimb = Array.from(
+      xmlDoc.getElementsByTagName("cumulativeClimb")
+    )[0];
+
+    let totalTime_text = "";
+    if (totalTime) {
+      const totalSeconds = parseInt(totalTime.textContent, 10);
+      console.log(formatTotalTime(totalSeconds, "hhmm")); // 02:05
+      console.log(formatTotalTime(totalSeconds, "chinese")); // 2小时5分钟
+
+      totalTime_text = formatTotalTime(totalSeconds, "chinese");
+    }
+
+    let totalDistance_text = "";
+    if (totalDistance) {
+      const meters = parseFloat(totalDistance.textContent || "0");
+      totalDistance_text = formatDistance(meters);
+    }
+
+    let cumulativeClimb_text = "";
+    if (cumulativeClimb) {
+      const meters = parseFloat(cumulativeClimb.textContent || "0");
+      cumulativeClimb_text = formatDistance(meters);
+    }
+
+    let averageSpeed_text = "";
+    if(totalTime && totalDistance){
+      const totalSeconds = parseInt(totalTime.textContent, 10);
+      const meters = parseInt(totalDistance.textContent || "0");
+      averageSpeed_text = calcAverageSpeed(meters,totalSeconds);
+    }
+    //时间
+    const sportTime = Array.from(
+      xmlDoc.getElementsByTagName("time")
+    )[0];
+    let sportTime_text= ""
+    if (sportTime) {
+      console.log(formatSportTime(sportTime, "local"));  // 本地时间
+      console.log(formatSportTime(sportTime, "utc"));    // UTC ISO 字符串
+      console.log(formatSportTime(sportTime, "custom")); // 2025-09-28 10:59:45
+      sportTime_text = formatSportTime(sportTime, "custom")
+    }
+
+
 
     // 提取轨迹点
     const points = trkpts.map((pt) => ({
@@ -64,7 +203,6 @@ export default function GpxExcalidrawPage() {
       y: -(p.lat - minLat) * scale, // Y轴反向
     }));
 
- 
     const freedraw: ExcalidrawFreeDrawElement = {
       id: "free-1",
       type: "freedraw",
@@ -101,12 +239,11 @@ export default function GpxExcalidrawPage() {
 
     const sceneData = {
       elements: convertToExcalidrawElements([
-        
         {
           type: "text",
           x: 150,
           y: 250,
-          text: "距离:",
+          text: "距离:" + totalDistance_text,
           fontSize: 20,
           strokeColor: "#1971c2",
         },
@@ -114,7 +251,7 @@ export default function GpxExcalidrawPage() {
           type: "text",
           x: 150,
           y: 300,
-          text: "时长:",
+          text: "时长: " + totalTime_text,
           fontSize: 20,
           strokeColor: "#1971c2",
         },
@@ -122,7 +259,7 @@ export default function GpxExcalidrawPage() {
           type: "text",
           x: 150,
           y: 350,
-          text: "累计爬升:",
+          text: "累计爬升:"+cumulativeClimb_text,
           fontSize: 20,
           strokeColor: "#1971c2",
         },
@@ -130,7 +267,15 @@ export default function GpxExcalidrawPage() {
           type: "text",
           x: 150,
           y: 400,
-          text: "平均速度:",
+          text: "平均速度:"+averageSpeed_text,
+          fontSize: 20,
+          strokeColor: "#1971c2",
+        },
+        {
+          type: "text",
+          x: 150,
+          y: 450,
+          text: sportTime_text,
           fontSize: 20,
           strokeColor: "#1971c2",
         },
