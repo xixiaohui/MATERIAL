@@ -190,6 +190,8 @@ export default function GpxExcalidrawPage() {
 
   const [fileName, setFileName] = useState("还未选择文件");
 
+  const [lang, setLang] = useState("zh-CN"); // 默认中文
+
   // 解析 GPX 文件
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -461,15 +463,20 @@ export default function GpxExcalidrawPage() {
 
   return (
     <div style={{ height: "100vh" }}>
+
+     
       <Excalidraw
         initialData={{
           // elements: freedrawElement,
+          
           appState: {
             viewBackgroundColor: "#f8f9fa",
             gridSize: 16,
           },
           scrollToContent: true,
         }}
+        langCode="zh-CN"
+
         renderTopRightUI={() => (
           <div className="flex items-center space-x-3">
             {/* 自定义按钮 */}
