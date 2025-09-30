@@ -476,7 +476,7 @@ export default function GpxExcalidrawPage() {
           scrollToContent: true,
         }}
         langCode="zh-CN"
-
+        gridModeEnabled = "true"
         renderTopRightUI={() => (
           <div className="flex items-center space-x-3">
             {/* 自定义按钮 */}
