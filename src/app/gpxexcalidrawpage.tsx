@@ -16,6 +16,83 @@ import type {
 
 const { WelcomeScreen } = await import("@excalidraw/excalidraw");
 
+// 将一个点扩展成小圆的点数组
+function makeCirclePoints(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  segments = 100
+): [number, number][] {
+  const points: [number, number][] = [];
+  for (let i = 0; i < segments; i++) {
+    const angle = (2 * Math.PI * i) / segments;
+    points.push([
+      centerX + radius * Math.cos(angle),
+      centerY + radius * Math.sin(angle),
+    ]);
+  }
+  return points;
+}
+
+// 创建 freedraw + 嵌入首尾 marker
+function makeFreeDrawWithMarkers(
+  rawPoints: { x: number; y: number }[],
+  color: string
+): ExcalidrawFreeDrawElement {
+  if (rawPoints.length === 0) throw new Error("Points array is empty");
+
+  const start = rawPoints[0];
+  const end = rawPoints[rawPoints.length - 1];
+
+  // 将 marker 嵌入 points
+  const radius = 2;
+  const startCirclePoints = makeCirclePoints(start.x, start.y, radius);
+  const endCirclePoints = makeCirclePoints(end.x, end.y, radius);
+
+  // 构建最终 points 数组
+  const points = [
+    ...startCirclePoints,
+    ...rawPoints.map((p) => [p.x, p.y]),
+    ...endCirclePoints,
+  ];
+
+  // 相对坐标：以第一个点为原点
+  const originX = points[0][0];
+  const originY = points[0][1];
+  const relativePoints = points.map(([x, y]) => [x - originX, y - originY]);
+
+  return {
+    id: "freedraw-1",
+    type: "freedraw",
+    x: 400,
+    y: 500,
+    width: 1080, // 可按需要计算 bounding box
+    height: 1080,
+    strokeColor: color,
+    backgroundColor: "transparent",
+    fillStyle: "solid",
+    strokeWidth: 1,
+    strokeStyle: "solid",
+    roughness: 0,
+    opacity: 100,
+    groupIds: [],
+    frameId: null,
+    roundness: null,
+    seed: Math.random(),
+    version: 1,
+    versionNonce: Math.random(),
+    isDeleted: false,
+    boundElements: [],
+    angle: 0,
+    updated: Date.now(),
+    index: "a1",
+    points: relativePoints,
+    pressures: Array(relativePoints.length).fill(0.2),
+    simulatePressure: false,
+    lastCommittedPoint: null,
+  };
+}
+
 /**
  * 格式化总时长
  * @param {number} totalSeconds - 总时长（单位：秒）
@@ -193,8 +270,8 @@ export default function GpxExcalidrawPage() {
     const maxLon = Math.max(...points.map((p) => p.lon));
 
     // 缩放比例，确保轨迹不会超出画布
-    const scaleX = 200; // 水平缩放比例
-    const scaleY = 200; // 垂直缩放比例
+    const scaleX = 100; // 水平缩放比例
+    const scaleY = 100; // 垂直缩放比例
     const width = maxLon - minLon;
     const height = maxLat - minLat;
 
@@ -235,11 +312,62 @@ export default function GpxExcalidrawPage() {
         p.x - transformedPoints[0].x,
         p.y - transformedPoints[0].y,
       ]),
-      pressures: Array(transformedPoints.length).fill(0.3), // 跟 points 对齐
+      pressures: Array(transformedPoints.length).fill(0.2), // 跟 points 对齐
       simulatePressure: false,
       lastCommittedPoint: null,
     };
 
+    const rawPoints = transformedPoints
+    const freedraw2 = makeFreeDrawWithMarkers(rawPoints, "#1971c2");
+
+    // ✅ 计算起点/终点的绝对坐标
+    const first = freedraw.points[0];
+    const last = freedraw.points[freedraw.points.length - 1];
+
+    const firstAbsX = freedraw.x + first[0];
+    const firstAbsY = freedraw.y + first[1];
+    const lastAbsX = freedraw.x + last[0];
+    const lastAbsY = freedraw.y + last[1];
+    // ✅ 画圈半径
+    const r = 3;
+
+    // ✅ 起点圈
+    const startCircle = {
+      id: "circle-start",
+      type: "ellipse",
+      x: firstAbsX - r,
+      y: firstAbsY - r,
+      width: r * 2,
+      height: r * 2,
+      strokeColor: "#ff0000", // 红色
+      backgroundColor: "transparent",
+      fillStyle: "solid",
+      strokeWidth: 5,
+      strokeStyle: "solid",
+      roughness: 0,
+      opacity: 100,
+      seed: Math.random(),
+      version: 1,
+      versionNonce: Math.random(),
+      isDeleted: false,
+      groupIds: [],
+      frameId: null,
+      boundElements: [],
+      roundness: null,
+      angle: 0,
+      updated: Date.now(),
+      index: "a2",
+    };
+
+    // ✅ 终点圈
+    const endCircle = {
+      ...startCircle,
+      id: "circle-end",
+      x: lastAbsX - r,
+      y: lastAbsY - r,
+      strokeColor: "#00aa00", // 绿色
+      index: "a3",
+    };
     const sceneData = {
       elements: convertToExcalidrawElements([
         {
@@ -282,7 +410,24 @@ export default function GpxExcalidrawPage() {
           fontSize: 20,
           strokeColor: "#1971c2",
         },
+        // {
+        //   type: "rectangle",
+        //   x: 10,
+        //   y: 10,
+        //   strokeWidth: 2,
+        //   id: "1",
+        // },
+        // {
+        //   type: "frame",
+        //   children: ["1"],
+        //   name: "My frame",
+        //   width: 360,
+        //   height: 640,
+        // },
         freedraw,
+        startCircle,
+        endCircle,
+        freedraw2
       ]),
       appState: {
         // viewBackgroundColor: "#a5d8ff",
@@ -296,12 +441,33 @@ export default function GpxExcalidrawPage() {
     excalidrawAPI?.scrollToContent();
   };
 
+  // const freedrawElement = convertToExcalidrawElements([
+  //   {
+  //     type: "rectangle",
+  //     x: 10,
+  //     y: 10,
+  //     strokeWidth: 2,
+  //     id: "1",
+  //   },
+
+  //   {
+  //     type: "frame",
+  //     children: ["1"],
+  //     name: "My frame",
+  //     width: 360,
+  //     height: 640,
+  //   },
+  // ]);
+
   return (
     <div style={{ height: "100vh" }}>
       <Excalidraw
         initialData={{
-          // elements: [freedrawElement],
-          appState: { viewBackgroundColor: "#f8f9fa" },
+          // elements: freedrawElement,
+          appState: {
+            viewBackgroundColor: "#f8f9fa",
+            gridSize: 16,
+          },
           scrollToContent: true,
         }}
         renderTopRightUI={() => (
