@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
@@ -14,7 +15,9 @@ import type {
   ExcalidrawFreeDrawElement,
 } from "@excalidraw/excalidraw/types";
 
-const { WelcomeScreen } = await import("@excalidraw/excalidraw");
+import { useRouter } from 'next/navigation';
+
+const { WelcomeScreen, MainMenu } = await import("@excalidraw/excalidraw");
 
 // 将一个点扩展成小圆的点数组
 function makeCirclePoints(
@@ -185,12 +188,14 @@ function formatSportTime(
 }
 
 export default function GpxExcalidrawPage() {
+  const router = useRouter();
+
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
 
   const [fileName, setFileName] = useState("还未选择文件");
 
-  const [lang, setLang] = useState("zh-CN"); // 默认中文
+  // const [lang, setLang] = useState("zh-CN"); // 默认中文
 
   // 解析 GPX 文件
   const handleFileUpload = async (
@@ -319,7 +324,7 @@ export default function GpxExcalidrawPage() {
       lastCommittedPoint: null,
     };
 
-    const rawPoints = transformedPoints
+    const rawPoints = transformedPoints;
     const freedraw2 = makeFreeDrawWithMarkers(rawPoints, "#1971c2");
 
     // ✅ 计算起点/终点的绝对坐标
@@ -429,7 +434,7 @@ export default function GpxExcalidrawPage() {
         freedraw,
         startCircle,
         endCircle,
-        freedraw2
+        freedraw2,
       ]),
       appState: {
         // viewBackgroundColor: "#a5d8ff",
@@ -461,14 +466,42 @@ export default function GpxExcalidrawPage() {
   //   },
   // ]);
 
+  const handleSave = async () => {
+    try{
+      const elements = await excalidrawAPI.getSceneElements();
+      const appState = await excalidrawAPI.getAppState();
+
+      // 删除无法序列化的属性
+      delete appState.collaborators;
+
+      const data = { elements, appState};
+
+      // console.log(data)
+
+      const res = await fetch("/api/drawings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          title: "未命名", 
+          data : data,
+          description: "通过菜单保存的测试绘图",
+          visibility: "public",
+        }),
+      });
+      if (!res.ok) throw new Error("保存失败");
+        alert("✅ 已保存到数据库！");
+    }catch(err){
+      console.error(err);
+      alert("❌ 保存失败");
+    }
+  };
+
   return (
     <div style={{ height: "100vh" }}>
-
-     
       <Excalidraw
         initialData={{
           // elements: freedrawElement,
-          
+
           appState: {
             viewBackgroundColor: "#f8f9fa",
             gridSize: 16,
@@ -476,7 +509,7 @@ export default function GpxExcalidrawPage() {
           scrollToContent: true,
         }}
         langCode="zh-CN"
-        gridModeEnabled = "true"
+        gridModeEnabled="true"
         renderTopRightUI={() => (
           <div className="flex items-center space-x-3">
             {/* 自定义按钮 */}
@@ -502,7 +535,47 @@ export default function GpxExcalidrawPage() {
         )}
         excalidrawAPI={(api) => setExcalidrawAPI(api)}
       >
-        <WelcomeScreen />
+        <WelcomeScreen>
+          <WelcomeScreen.Center>
+            <WelcomeScreen.Center.Logo>
+              {/* <h2 style={{ color: "#333" }}>欢迎使用我的画板</h2> */}
+              <img
+                src="/yumrin.svg"
+                alt="My Logo"
+                style={{ width: 240, marginBottom: 7 }}
+              ></img>
+            </WelcomeScreen.Center.Logo>
+            <WelcomeScreen.Center.Heading>
+              解析GPX文件，显示运动数据与轨迹
+            </WelcomeScreen.Center.Heading>
+            <WelcomeScreen.Center.Menu>
+              <WelcomeScreen.Center.MenuItemLoadScene />
+              <WelcomeScreen.Center.MenuItemHelp />
+              <WelcomeScreen.Center.MenuItem onSelect={() => (router.push(`/gallery`))}>
+                相册
+              </WelcomeScreen.Center.MenuItem>
+            </WelcomeScreen.Center.Menu>
+          </WelcomeScreen.Center>
+          <WelcomeScreen.Hints.ToolbarHint />
+          <WelcomeScreen.Hints.MenuHint />
+          <WelcomeScreen.Hints.HelpHint />
+        </WelcomeScreen>
+        <MainMenu>
+          <MainMenu.DefaultItems.LoadScene />
+          <MainMenu.DefaultItems.Export />
+          <MainMenu.DefaultItems.SaveAsImage />
+          <MainMenu.DefaultItems.SaveToActiveFile />
+          <MainMenu.DefaultItems.ClearCanvas />
+          <MainMenu.DefaultItems.SearchMenu />
+          <MainMenu.DefaultItems.Help />
+          <MainMenu.DefaultItems.Socials />
+          <MainMenu.DefaultItems.ChangeCanvasBackground />
+          <MainMenu.DefaultItems.ToggleTheme />
+
+          <MainMenu.Item onSelect={() => handleSave()}>
+            保存到相册
+          </MainMenu.Item>
+        </MainMenu>
       </Excalidraw>
     </div>
   );

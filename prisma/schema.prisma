@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String?
+  email     String?   @unique
+  drawings  Drawing[]
+  createdAt DateTime  @default(now())
+}
+
+model Drawing {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  data        Json
+  visibility  String   @default("public")
+  tags        DrawingTag[]   // 一对多
+  thumbnail   String?
+  likes       Int       @default(0)
+  views       Int       @default(0)
+  comments  Comment[]   // ✅ 反向关系字段
+  
+  user        User? @relation(fields: [userId], references: [id])
+  userId      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DrawingTag {
+  id        Int      @id @default(autoincrement())
+  name      String
+  drawing   Drawing  @relation(fields: [drawingId], references: [id])
+  drawingId String
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  content    String
+  drawingId  String
+  userId     String?
+  createdAt  DateTime @default(now())
+  Drawing    Drawing  @relation(fields: [drawingId], references: [id])
+}
