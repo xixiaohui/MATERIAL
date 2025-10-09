@@ -15,7 +15,7 @@ import type {
   ExcalidrawFreeDrawElement,
 } from "@excalidraw/excalidraw/types";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 const { WelcomeScreen, MainMenu } = await import("@excalidraw/excalidraw");
 
@@ -467,30 +467,30 @@ export default function GpxExcalidrawPage() {
   // ]);
 
   const handleSave = async () => {
-    try{
+    try {
       const elements = await excalidrawAPI.getSceneElements();
       const appState = await excalidrawAPI.getAppState();
 
       // 删除无法序列化的属性
       delete appState.collaborators;
 
-      const data = { elements, appState};
+      const data = { elements, appState };
 
       // console.log(data)
 
       const res = await fetch("/api/drawings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          title: "未命名", 
-          data : data,
+        body: JSON.stringify({
+          title: "未命名",
+          data: data,
           description: "通过菜单保存的测试绘图",
           visibility: "public",
         }),
       });
       if (!res.ok) throw new Error("保存失败");
-        alert("✅ 已保存到数据库！");
-    }catch(err){
+      alert("✅ 已保存到数据库！");
+    } catch (err) {
       console.error(err);
       alert("❌ 保存失败");
     }
@@ -551,7 +551,9 @@ export default function GpxExcalidrawPage() {
             <WelcomeScreen.Center.Menu>
               <WelcomeScreen.Center.MenuItemLoadScene />
               <WelcomeScreen.Center.MenuItemHelp />
-              <WelcomeScreen.Center.MenuItem onSelect={() => (router.push(`/gallery`))}>
+              <WelcomeScreen.Center.MenuItem
+                onSelect={() => router.push(`/gallery`)}
+              >
                 相册
               </WelcomeScreen.Center.MenuItem>
             </WelcomeScreen.Center.Menu>
