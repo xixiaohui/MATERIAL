@@ -1,10 +1,9 @@
-import { PrismaClient } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
 
 import { Drawing } from "@/generated/prisma";
 
 import Link from "next/link";
 
-const prisma = new PrismaClient();
 
 export default async function GalleryPage() {
     
