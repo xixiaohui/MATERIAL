@@ -37,9 +37,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const drawings = await prisma.drawing.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
-  return NextResponse.json(drawings);
+  try {
+    const drawings = await prisma.drawing.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    return NextResponse.json(drawings);
+  } catch (err) {
+    console.error("Failed to fetch drawings:", err);
+    // 始终返回 JSON，即使查询失败
+    return NextResponse.json({ data: [], error: "Failed to fetch drawings" }, { status: 500 });
+  }
 }

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -11,8 +11,15 @@ export default function GalleryPage() {
 
   useEffect(() => {
     fetch("/api/drawings")
-      .then((res) => res.json())
-      .then(setDrawings);
+      .then((res) => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then((data) => setDrawings(data.data ?? data)) // 支持空数据
+      .catch((err) => {
+        console.error("Failed to fetch drawings:", err);
+        setDrawings([]); // 防止页面崩溃
+      });
   }, []);
 
   return (
