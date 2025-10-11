@@ -542,7 +542,7 @@ export default function GpxExcalidrawPage() {
             <WelcomeScreen.Center.Logo>
               {/* <h2 style={{ color: "#333" }}>欢迎使用我的画板</h2> */}
               <img
-                src="/yumrin.svg"
+                src="/cycle_yumrin.svg"
                 alt="My Logo"
                 style={{ width: 240, marginBottom: 7 }}
               ></img>
@@ -556,7 +556,7 @@ export default function GpxExcalidrawPage() {
               <WelcomeScreen.Center.MenuItem
                 onSelect={() => router.push(`/gallery`)}
               >
-                相册
+                我的相册
               </WelcomeScreen.Center.MenuItem>
             </WelcomeScreen.Center.Menu>
           </WelcomeScreen.Center>
