@@ -11,15 +11,9 @@ export default function GalleryPage() {
 
   useEffect(() => {
     fetch("/api/drawings")
-      .then((res) => {
-        if (!res.ok) throw new Error("Network response was not ok");
-        return res.json();
-      })
-      .then((data) => setDrawings(data.data ?? data)) // 支持空数据
-      .catch((err) => {
-        console.error("Failed to fetch drawings:", err);
-        setDrawings([]); // 防止页面崩溃
-      });
+      .then((res) => res.json())
+      .then((data) => setDrawings(data))
+      .catch((err) => console.error("Fetch error:", err));
   }, []);
 
   return (

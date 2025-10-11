@@ -1,35 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+
+import { supabase } from "@/lib/supabase";
+
+
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, description, data, visibility, thumbnail, userId, tags } =
-      body;
+    const { title, description, drawingdata, visibility, thumbnail, userId } = body;
 
-    const drawing = await prisma.drawing.create({
-      data: {
-        title,
-        description,
-        data,
-        visibility,
-        thumbnail,
-        userId,
-        ...(tags && tags.length > 0
-          ? {
-              tags: {
-                connectOrCreate: tags.map((tag: string) => ({
-                  where: { name: tag },
-                  create: { name: tag },
-                })),
-              },
-            }
-          : {}),
-      },
-      include: { tags: true },
-    });
+   
+    const {data,error} = await supabase
+    .from("Drawing")
+    .insert({
+      id:"001",
+      title:title,
+      description:description,
+      data:drawingdata,
+      visibility:visibility,
+      thumbnail:thumbnail,
+      userId:userId,
+      likes:0,
+      views:0,
+      updatedAt:new Date().toISOString(),
+    })
+    .select()
 
-    return NextResponse.json(drawing);
+
+    if(error){
+      console.error("Insert error:",error.message);
+      return;
+    }
+
+    console.log("Insert drawing",data)
+
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
@@ -37,15 +43,14 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  try {
-    const drawings = await prisma.drawing.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
-    return NextResponse.json(drawings);
-  } catch (err) {
-    console.error("Failed to fetch drawings:", err);
-    // 始终返回 JSON，即使查询失败
-    return NextResponse.json({ data: [], error: "Failed to fetch drawings" }, { status: 500 });
+  const { data, error } = await supabase
+    .from("Drawing") // 表名
+    .select("*")
+    .limit(50);
+
+  if (error) {
+    console.error("Supabase Error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  return NextResponse.json(data || []);
 }

@@ -483,9 +483,11 @@ export default function GpxExcalidrawPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: "未命名",
-          data: data,
           description: "通过菜单保存的测试绘图",
+          drawingdata: data,
           visibility: "public",
+          thumbnail:null,
+          userId:"123"
         }),
       });
       if (!res.ok) throw new Error("保存失败");
