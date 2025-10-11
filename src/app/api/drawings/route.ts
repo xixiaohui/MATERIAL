@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabase } from "@/lib/supabase";
 
-
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const {data,error} = await supabase
     .from("Drawing")
     .insert({
-      id:"001",
+      id:uuidv4(),
       title:title,
       description:description,
       data:drawingdata,
